@@ -19,7 +19,8 @@ export function extractFormulas(text: string): { range: string; formula: string 
 
 export function detectUpdateCells(text: string): { range: string; values: any[][] }[] {
   const results: { range: string; values: any[][] }[] = [];
-  const regex = /UPDATE_CELLS:\s*range=([A-Z0-9:]+),\s*values=(\[\[.+\]\])/gi;
+  // More flexible regex to catch various AI formatting styles
+  const regex = /UPDATE_CELLS:?\s*range=([A-Z0-9:]+),?\s*values=(\[\[.+\]\])/gi;
   let match;
   while ((match = regex.exec(text)) !== null) {
     try {
