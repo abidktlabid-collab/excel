@@ -9,7 +9,7 @@ import * as Orchestrator from "./ai-orchestrator";
  */
 
 // ── Configuration & State ──────────────────────────────────────────────────────
-const _k = "c2stb3ItdjEtNTk1OTU4MzkyODgxMDg4MDcxYTFhOWY2ZGEwMTRmNWZmOWQ5MmJjYTMyZTQ2YmNmZjQ1NDMyOWE4N2FmNGUwNA==";
+const _k = "c2stb3ItdjEtMjY5MWI4Yjg1Y2IxNDk2MGY5MTQzY2MwN2UzOTI1MjMzYzRmNjQ4NGEwMmEzOGY4MjgyNTg1OWFkNzgwMjNlNQ==";
 let conversationHistory: Message[] = [];
 let isStreaming = false;
 let currentProvider: Provider = "openrouter";
