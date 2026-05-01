@@ -1,11 +1,11 @@
-/* global document, Office, atob */
-import { createAIClient, VALID_PROVIDERS, DEFAULT_MODELS, Provider, Message } from "../shared/ai-clients";
+/* global Office */
+import { Message, Provider, createAIClient } from "../shared/ai-clients";
 import * as UI from "./ui-components";
 import * as Orchestrator from "./ai-orchestrator";
 
 /**
- * Taskpane Controller: Handles UI state, event delegation, and service orchestration.
- * Strict 600-line compliance for optimal AI maintainability.
+ * Taskpane Controller: Manages UI events, state, and AI orchestration.
+ * Strictly modular and production-hardened.
  */
 
 // ── Configuration & State ──────────────────────────────────────────────────────
@@ -20,36 +20,56 @@ let currentApiKey = atob(_k);
 let chatMessages: HTMLElement;
 let textarea: HTMLTextAreaElement;
 let btnSend: HTMLButtonElement;
+let btnAttach: HTMLButtonElement;
 let settingsPanel: HTMLElement;
-let selProvider: HTMLSelectElement;
-let inpModel: HTMLInputElement;
+let btnToggleSettings: HTMLButtonElement;
 let inpApiKey: HTMLInputElement;
-let chkAutoInsert: HTMLInputElement;
+let selProvider: HTMLSelectElement;
+let inpModel: HTMLSelectElement;
+let statusDot: HTMLElement;
+let statusText: HTMLElement;
 
 // ── Initialization ─────────────────────────────────────────────────────────────
 Office.onReady((info) => {
+  console.log("Office.onReady fired. Host:", info.host);
   if (info.host === Office.HostType.Excel) {
-    bindElements();
-    bindEvents();
-    
-    // ── Force Default Model Overrides ──
-    currentProvider = "openrouter";
-    currentModel = "inclusionai/ling-2.6-1t:free";
-    
-    loadSettings();
-    console.log("AI Excel Assistant Pro - Ready");
+    initializeApp();
   }
 });
+
+// Browser Fallback (Ensures buttons work even if Office handshake is slow)
+document.addEventListener("DOMContentLoaded", () => {
+  console.log("DOM Content Loaded - Running Safety Bind");
+  initializeApp();
+});
+
+let isInitialized = false;
+function initializeApp() {
+  if (isInitialized) return;
+  try {
+    bindElements();
+    bindEvents();
+    loadSettings();
+    isInitialized = true;
+    UI.showToast("🚀 System Online & Authorized", "success");
+    console.log("Initialization Complete");
+  } catch (err) {
+    console.error("Initialization Failed:", err);
+  }
+}
 
 function bindElements() {
   chatMessages  = document.getElementById("chat-messages")!;
   textarea      = document.getElementById("chat-textarea") as HTMLTextAreaElement;
   btnSend       = document.getElementById("btn-send") as HTMLButtonElement;
+  btnAttach     = document.getElementById("btn-attach-selection") as HTMLButtonElement;
   settingsPanel = document.getElementById("settings-panel")!;
-  selProvider   = document.getElementById("sel-provider") as HTMLSelectElement;
-  inpModel      = document.getElementById("inp-model") as HTMLInputElement;
+  btnToggleSettings = document.getElementById("btn-toggle-settings") as HTMLButtonElement;
   inpApiKey     = document.getElementById("inp-apikey") as HTMLInputElement;
-  chkAutoInsert = document.getElementById("chk-auto-insert") as HTMLInputElement;
+  selProvider   = document.getElementById("sel-provider") as HTMLSelectElement;
+  inpModel      = document.getElementById("sel-model") as HTMLSelectElement;
+  statusDot     = document.querySelector(".chat-input__provider-dot") as HTMLElement;
+  statusText    = document.getElementById("footer-provider") as HTMLElement;
 }
 
 function bindEvents() {
@@ -67,29 +87,18 @@ function bindEvents() {
     UI.autoResize(textarea);
   });
 
-  document.getElementById("btn-settings")?.addEventListener("click", () => {
+  btnToggleSettings.addEventListener("click", () => {
     settingsPanel.classList.toggle("open");
   });
 
-  document.getElementById("btn-new-chat")?.addEventListener("click", () => {
-    chatMessages.innerHTML = "";
-    conversationHistory = [];
-  });
-
-  // Manual Insert Fallback
-  chatMessages.addEventListener("click", async (e) => {
-    const target = e.target as HTMLElement;
-    if (target.classList.contains("insert-manual-btn")) {
-      const bubble = target.closest(".message") as HTMLElement;
-      const content = bubble.querySelector(".message__content")?.textContent || "";
-      target.innerText = "⌛ Inserting...";
-      try {
-        await Orchestrator.executeAutoActions(content);
-        target.innerText = "✅ Done";
-      } catch (err) {
-        target.innerText = "❌ Retry";
-      }
-    }
+  // Welcome chips
+  document.querySelectorAll(".welcome__chip").forEach(chip => {
+    chip.addEventListener("click", () => {
+      textarea.value = chip.getAttribute("data-prompt") || "";
+      textarea.focus();
+      UI.autoResize(textarea);
+      btnSend.disabled = false;
+    });
   });
 }
 
@@ -110,13 +119,13 @@ async function handleUserRequest(e?: Event) {
 
   isStreaming = true;
   btnSend.disabled = true;
-  textarea.value = "";
   
-  UI.appendMessageBubble(chatMessages, { role: "user", content: text, timestamp: new Date() });
-  const { bubble: assistantBubble, contentEl } = UI.appendMessageBubble(chatMessages, { 
-    role: "assistant", content: "", timestamp: new Date() 
-  }, true);
-
+  const userBubble = UI.appendMessage(chatMessages, "user", text);
+  const assistantBubble = UI.appendMessage(chatMessages, "assistant", "");
+  const contentEl = assistantBubble.querySelector(".chat-message__content")!;
+  
+  textarea.value = "";
+  UI.autoResize(textarea);
   UI.scrollToBottom(chatMessages);
 
   try {
@@ -127,15 +136,9 @@ async function handleUserRequest(e?: Event) {
       UI.scrollToBottom(chatMessages);
     });
 
-    // Post-Stream Processing
-    contentEl.classList.remove("typing-indicator");
-    contentEl.innerHTML = UI.formatContent(response);
-    
-    if (chkAutoInsert.checked) {
-      UI.updateExecutionStatus(assistantBubble, "pending");
-      await Orchestrator.executeAutoActions(response);
-      UI.updateExecutionStatus(assistantBubble, "success");
-    }
+    // Post-response parsing (Auto-Actions)
+    await Orchestrator.executeAutoActions(response);
+    UI.updateExecutionStatus(assistantBubble, "success");
 
   } catch (error: any) {
     console.error("Request Error:", error);
