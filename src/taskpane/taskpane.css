@@ -1,48 +1,61 @@
 /* ── Design Tokens ─────────────────────────────────────────────────────────── */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
 
 :root {
-  /* Surface palette */
-  --bg-primary:    #0d0f11;
-  --bg-secondary:  #14171c;
-  --bg-tertiary:   #1a1e25;
-  --bg-elevated:   #1e232b;
-  --bg-hover:      #252b35;
+  /* Surface palette - Deep Slate & Carbon */
+  --bg-primary:    #090a0c;
+  --bg-secondary:  rgba(15, 18, 23, 0.85); /* Glass */
+  --bg-tertiary:   #12151a;
+  --bg-elevated:   rgba(30, 35, 43, 0.9); /* Glass */
+  --bg-hover:      #1c2129;
 
-  /* Accent */
-  --accent:        #6c63ff;
-  --accent-soft:   rgba(108, 99, 255, 0.15);
-  --accent-glow:   rgba(108, 99, 255, 0.35);
-  --accent-hover:  #7b73ff;
+  /* Accent - Electric Violet */
+  --accent:        #8b5cf6;
+  --accent-soft:   rgba(139, 92, 246, 0.12);
+  --accent-glow:   rgba(139, 92, 246, 0.3);
+  --accent-hover:  #a78bfa;
 
-  /* Text */
-  --text-primary:   #e4e6eb;
-  --text-secondary: #8b8fa3;
-  --text-muted:     #555a6e;
+  /* Text - High Contrast / Executive */
+  --text-primary:   #f1f5f9;
+  --text-secondary: #94a3b8;
+  --text-muted:     #475569;
   --text-inverse:   #ffffff;
 
   /* Semantic */
-  --success:  #34d399;
-  --warning:  #fbbf24;
-  --error:    #f87171;
+  --success:  #10b981;
+  --warning:  #f59e0b;
+  --error:    #ef4444;
 
-  /* Border / Divider */
-  --border:     rgba(255, 255, 255, 0.06);
-  --border-strong: rgba(255, 255, 255, 0.12);
+  /* Border / Divider - Ultra Thin */
+  --border:     rgba(255, 255, 255, 0.05);
+  --border-strong: rgba(255, 255, 255, 0.1);
 
-  /* Shadows */
-  --shadow-sm: 0 1px 3px rgba(0,0,0,0.4);
-  --shadow-md: 0 4px 12px rgba(0,0,0,0.5);
-  --shadow-lg: 0 12px 40px rgba(0,0,0,0.6);
+  /* Shadows - Layered */
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.3);
+  --shadow-md: 0 8px 24px rgba(0,0,0,0.5);
+  --shadow-lg: 0 20px 50px rgba(0,0,0,0.7);
 
-  /* Radius */
-  --radius-sm:  6px;
-  --radius-md: 10px;
-  --radius-lg: 16px;
-  --radius-xl: 20px;
+  /* Radius - Professional curves */
+  --radius-sm:  8px;
+  --radius-md: 12px;
+  --radius-lg: 20px;
+  --radius-xl: 28px;
 
-  /* Transition */
-  --ease: cubic-bezier(0.4, 0, 0.2, 1);
+  /* Animation */
+  --ease: cubic-bezier(0.16, 1, 0.3, 1); /* Apple-style ease out */
+  --anim-speed: 0.4s;
+}
+
+/* ── Global Animations ──────────────────────────────────────────────────────── */
+@keyframes slideUpFade {
+  from { opacity: 0; transform: translateY(12px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes glassGlow {
+  0% { box-shadow: 0 0 5px var(--accent-soft); }
+  50% { box-shadow: 0 0 20px var(--accent-glow); }
+  100% { box-shadow: 0 0 5px var(--accent-soft); }
 }
 
 /* ── Reset ──────────────────────────────────────────────────────────────────── */
@@ -55,14 +68,16 @@
 html, body {
   width: 100%;
   height: 100%;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-family: 'Outfit', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   font-size: 13px;
-  line-height: 1.5;
+  line-height: 1.6;
   color: var(--text-primary);
   background: var(--bg-primary);
+  background-image: 
+    radial-gradient(at 0% 0%, rgba(139, 92, 246, 0.05) 0px, transparent 50%),
+    radial-gradient(at 100% 100%, rgba(108, 99, 255, 0.05) 0px, transparent 50%);
   overflow: hidden;
   -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
 }
 
 /* ── App Shell ──────────────────────────────────────────────────────────────── */
