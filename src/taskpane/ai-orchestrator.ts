@@ -51,7 +51,7 @@ export async function executeAutoActions(text: string): Promise<void> {
   }
 
   // Surgical Updates (Cells/Formulas)
-  const cellUpdates = AIParser.parseCellUpdates(text);
+  const cellUpdates = AIParser.detectUpdateCells(text);
   if (cellUpdates.length > 0) {
     for (const update of cellUpdates) {
       await ExcelService.updateCells(update.range, update.values);
@@ -59,12 +59,18 @@ export async function executeAutoActions(text: string): Promise<void> {
   }
 
   // Structural Changes
-  const pivotOp = AIParser.parsePivotTableCommand(text);
-  if (pivotOp) await ExcelService.applyStructure("PIVOT", pivotOp);
+  const pivotOps = AIParser.detectPivotTable(text);
+  if (pivotOps.length > 0) {
+    for (const op of pivotOps) await ExcelService.applyStructure("PIVOT", op);
+  }
 
-  const slicerOp = AIParser.parseSlicerCommand(text);
-  if (slicerOp) await ExcelService.applyStructure("SLICER", slicerOp);
+  const slicerOps = AIParser.detectSlicer(text);
+  if (slicerOps.length > 0) {
+    for (const op of slicerOps) await ExcelService.applyStructure("SLICER", op);
+  }
 
-  const protectOp = AIParser.parseProtectSheetCommand(text);
-  if (protectOp) await ExcelService.applyStructure("PROTECT", protectOp);
+  const protectOps = AIParser.detectProtection(text);
+  if (protectOps.length > 0) {
+    for (const op of protectOps) await ExcelService.applyStructure("PROTECT", op);
+  }
 }
