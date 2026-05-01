@@ -136,3 +136,14 @@ export function autoResize(el: HTMLTextAreaElement) {
   el.style.height = "auto";
   el.style.height = Math.min(el.scrollHeight, 120) + "px";
 }
+export function showToast(message: string, type: "success" | "error" = "success") {
+  const toast = document.getElementById("toast");
+  if (!toast) return;
+  
+  toast.innerText = message;
+  toast.className = `context-toast context-toast--${type} show`;
+  
+  setTimeout(() => {
+    toast.classList.remove("show");
+  }, 4000);
+}

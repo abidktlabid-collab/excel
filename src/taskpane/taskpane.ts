@@ -120,9 +120,8 @@ async function handleUserRequest(e?: Event) {
   isStreaming = true;
   btnSend.disabled = true;
   
-  const userBubble = UI.appendMessage(chatMessages, "user", text);
-  const assistantBubble = UI.appendMessage(chatMessages, "assistant", "");
-  const contentEl = assistantBubble.querySelector(".chat-message__content")!;
+  const { bubble: userBubble } = UI.appendMessageBubble(chatMessages, { role: "user", content: text, timestamp: new Date() });
+  const { bubble: assistantBubble, contentEl } = UI.appendMessageBubble(chatMessages, { role: "assistant", content: "", timestamp: new Date() }, true);
   
   textarea.value = "";
   UI.autoResize(textarea);
