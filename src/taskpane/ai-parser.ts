@@ -130,6 +130,16 @@ export function detectTheme(text: string): { range: string; theme: "Modern" | "C
   return results;
 }
 
+export function detectCreateTable(text: string): { range: string; name: string }[] {
+  const results: any[] = [];
+  const regex = /CREATE_TABLE:\s*range=([A-Z0-9:]+),\s*name=(.+)/gi;
+  let match;
+  while ((match = regex.exec(text)) !== null) {
+    results.push({ range: match[1], name: match[2].trim() });
+  }
+  return results;
+}
+
 export function parseResponseToTable(text: string): string[][] | null {
   const lines = text.split("\n").filter(l => l.trim().startsWith("|"));
   if (lines.length < 2) return null;

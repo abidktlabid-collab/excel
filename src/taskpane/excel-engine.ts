@@ -161,6 +161,23 @@ export async function writeDataToEmptyArea(data: any[][]) {
     const targetRange = sheet.getRangeByIndexes(startRow, 0, data.length, data[0].length);
     targetRange.values = data;
     targetRange.format.autofitColumns();
+    
+    // Auto-convert to a professional Excel Table (Copilot Style)
+    const table = sheet.tables.add(targetRange, true);
+    table.name = `AI_Analysis_${Date.now()}`;
+    table.style = "TableStyleMedium2";
+    
+    await context.sync();
+  });
+}
+
+export async function createNamedTable(op: { range: string; name: string }) {
+  await Excel.run(async (context) => {
+    const sheet = context.workbook.worksheets.getActiveWorksheet();
+    const range = sheet.getRange(op.range);
+    const table = sheet.tables.add(range, true);
+    table.name = op.name.replace(/\s+/g, "_");
+    table.style = "TableStyleMedium9";
     await context.sync();
   });
 }

@@ -275,7 +275,11 @@ async function processAutoActions(text: string) {
   const themes = AIParser.detectTheme(text);
   for (const t of themes) await ExcelEngine.applyExecutiveTheme(t);
 
-  // Tables
+  // Excel Tables (Structured)
+  const tables = AIParser.detectCreateTable(text);
+  for (const tbl of tables) await ExcelEngine.createNamedTable(tbl);
+
+  // Raw Tables (to be auto-converted)
   const tableData = AIParser.parseResponseToTable(text);
   if (tableData && tableData.length >= 2) await ExcelEngine.writeDataToEmptyArea(tableData);
 }
