@@ -4,6 +4,7 @@ const devCerts = require("office-addin-dev-certs");
 const CopyWebpackPlugin = require("copy-webpack-plugin");
 const CustomFunctionsMetadataPlugin = require("custom-functions-metadata-plugin");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
+const webpack = require("webpack");
 const urlDev = "https://192.168.100.15:3000/";
 const urlProd = "https://llmexcel.liminity.se/";
 
@@ -89,6 +90,9 @@ module.exports = async (env, options) => {
             noErrorOnMissing: true,
           },
         ],
+      }),
+      new webpack.DefinePlugin({
+        "process.env.OPENROUTER_API_KEY": JSON.stringify(process.env.OPENROUTER_API_KEY),
       }),
     ],
     devServer: {
