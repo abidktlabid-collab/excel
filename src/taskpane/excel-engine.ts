@@ -150,33 +150,33 @@ export async function writeDataToEmptyArea(data: any[][]) {
   await Excel.run(async (context) => {
     const sheet = context.workbook.worksheets.getActiveWorksheet();
     
-    // 1. Find the next safe spot (absolute bottom of used range)
-    const usedRange = sheet.getUsedRangeOrNullObject(true);
-    const lastCell = usedRange.getLastCellOrNullObject();
-    lastCell.load("rowIndex");
+    // 1. Get the used range physically
+    const usedRange = sheet.getUsedRange(true);
+    usedRange.load(["rowCount", "address"]);
     await context.sync();
 
     let startRow = 0;
-    if (!lastCell.isNullObject) {
-      startRow = lastCell.rowIndex + 2; // Move 2 rows below the absolute last row
+    try {
+      // If usedRange exists, start 2 rows after the last row
+      if (usedRange && usedRange.rowCount > 0) {
+        startRow = usedRange.rowCount + 2;
+      }
+    } catch (e) {
+      // If sheet is empty, getUsedRange fails - we start at row 0
+      startRow = 0;
     }
 
+    // 2. Safe Write
     const targetRange = sheet.getRangeByIndexes(startRow, 0, data.length, data[0].length);
-    
-    // 2. RAW INSERT (The most important part - ensuring data exists)
     targetRange.values = data;
     targetRange.format.autofitColumns();
     await context.sync();
     
-    // 3. OPTIONAL STYLING (Try to make it a table, but don't fail if we can't)
+    // 3. Table-ify (Optional)
     try {
-      const table = sheet.tables.add(targetRange, true);
-      table.name = `AI_Table_${Date.now()}`;
-      table.style = "TableStyleMedium2";
+      sheet.tables.add(targetRange, true);
       await context.sync();
-    } catch (e) {
-      console.warn("Table conversion failed, but data was inserted successfully.", e);
-    }
+    } catch (e) { /* Non-critical */ }
   });
 }
 
