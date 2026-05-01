@@ -149,25 +149,33 @@ export async function applyExecutiveTheme(op: { range: string; theme: "Modern" |
 export async function writeDataToEmptyArea(data: any[][]) {
   await Excel.run(async (context) => {
     const sheet = context.workbook.worksheets.getActiveWorksheet();
+    
+    // 1. Find the next safe spot
     const usedRange = sheet.getUsedRangeOrNullObject(true);
-    usedRange.load("address, rowCount");
+    usedRange.load("rowCount");
     await context.sync();
 
     let startRow = 0;
     if (!usedRange.isNullObject) {
-      startRow = usedRange.rowCount + 2;
+      startRow = usedRange.rowCount + 2; // Add a 2-row buffer
     }
 
     const targetRange = sheet.getRangeByIndexes(startRow, 0, data.length, data[0].length);
+    
+    // 2. RAW INSERT (The most important part - ensuring data exists)
     targetRange.values = data;
     targetRange.format.autofitColumns();
-    
-    // Auto-convert to a professional Excel Table (Copilot Style)
-    const table = sheet.tables.add(targetRange, true);
-    table.name = `AI_Analysis_${Date.now()}`;
-    table.style = "TableStyleMedium2";
-    
     await context.sync();
+    
+    // 3. OPTIONAL STYLING (Try to make it a table, but don't fail if we can't)
+    try {
+      const table = sheet.tables.add(targetRange, true);
+      table.name = `AI_Table_${Date.now()}`;
+      table.style = "TableStyleMedium2";
+      await context.sync();
+    } catch (e) {
+      console.warn("Table conversion failed, but data was inserted successfully.", e);
+    }
   });
 }
 

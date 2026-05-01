@@ -122,6 +122,7 @@ class OpenRouterClient implements AIClient {
       messages: messages as OpenAI.ChatCompletionMessageParam[],
       model,
       stream: true,
+      max_tokens: 8192,
     });
     for await (const chunk of stream) {
       const content = chunk.choices[0]?.delta?.content || "";
