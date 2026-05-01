@@ -13,7 +13,7 @@ const _k = "c2stb3ItdjEtOGViNjEzZGQyYTVkZTViNjBhMzM3N2M5OTFiODI4YzZkMDBhOTE1OWYz
 let conversationHistory: Message[] = [];
 let isStreaming = false;
 let currentProvider: Provider = "openrouter";
-let currentModel = DEFAULT_MODELS[currentProvider];
+let currentModel = "inclusionai/ling-2.6-1t:free";
 let currentApiKey = atob(_k);
 
 // ── DOM Elements ──────────────────────────────────────────────────────────────
@@ -150,12 +150,7 @@ async function handleUserRequest(e?: Event) {
 
 // ── Settings Management ────────────────────────────────────────────────────────
 function loadSettings() {
-  const savedKey = localStorage.getItem("llm_excel_apikey");
-  if (savedKey) currentApiKey = savedKey;
-  
-  currentProvider = "openrouter";
-  currentModel = "inclusionai/ling-2.6-1t:free";
-  
+  // Use the hardcoded key as the primary source of truth
   inpApiKey.value = currentApiKey;
   selProvider.value = currentProvider;
   inpModel.value = currentModel;
