@@ -99,8 +99,8 @@ class OpenRouterClient implements AIClient {
       baseURL: "https://openrouter.ai/api/v1",
       dangerouslyAllowBrowser: true,
       defaultHeaders: {
-        "HTTP-Referer": "https://llmexcel.liminity.se",
-        "X-Title": "LLMExcel",
+        "HTTP-Referer": "https://aiexcelpoilot.netlify.app",
+        "X-Title": "AI Excel Assistant Pro",
       },
     });
   }

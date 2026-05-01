@@ -12,7 +12,7 @@ let conversationHistory: ChatMessage[] = [];
 let isStreaming = false;
 let currentProvider: Provider = "openrouter";
 let currentModel = DEFAULT_MODELS[currentProvider];
-let currentApiKey = "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";
+let currentApiKey = "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";
 let autoInsert = true;
 let attachedCellData: string | null = null;
 
