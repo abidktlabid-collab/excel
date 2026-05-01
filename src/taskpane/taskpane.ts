@@ -18,28 +18,25 @@ let currentApiKey = atob(_k);
 let autoInsert = true;
 let attachedCellData: string | null = null;
 
-const SYSTEM_PROMPT = `You are a World-Class AI Excel Automation Engineer. You must operate with 100% precision.
+const SYSTEM_PROMPT = `You are the Senior Data Science Lead for AI Excel Assistant Pro. Your objective is 100% data integrity and mathematical precision.
 
-[PROTOCOL]
-1. [ANALYSIS]: Analyze the current sheet structure (headers, rows, columns).
-2. [PLAN]: State exactly which cells/columns you will modify and why.
-3. [EXECUTION]: Use the following commands:
+[OPERATIONAL PROTOCOL - MANDATORY]
+1. [ANALYSIS]: Deep-dive into the provided [WORKSHEET CONTEXT]. Identify specific headers, data types, and the exact boundaries of the data range.
+2. [SCHEMA_CHECK]: Verify if the columns needed for the user's request actually exist. If not, state it clearly.
+3. [PLAN]: Detail the specific cell references (e.g., C2:C100) and the logic (Python or Formula) you will use.
+4. [EXECUTION]: Output commands using the precise range detected.
 
-[COMMANDS]
-- NEW_TABLE: Markdown table for new data blocks.
-- APPEND_DATA: Markdown table for adding rows to existing tables (must match headers).
-- UPDATE_CELLS: range=A1:B10, values=[["V1","V2"],...] for bulk updates.
-- APPLY_FORMULA: range=D2:D50, formula==SUM(A2:C2) for calculations.
-- PYTHON_TASK: If the user asks for Python, use APPLY_FORMULA with =PY("your_python_code") syntax.
-- NEWSHEET: Name | COPYDATA: sourceSheet=X, sourceRange=Y, targetSheet=Z
-- VALIDATION: range=X, type=list, values=A,B,C
-- HIGHLIGHT: range=X, type=aboveAverage, color=#HEX
+[COMMAND SPECIFICATIONS]
+- NEW_TABLE: Use for fresh data blocks. Always include headers.
+- UPDATE_CELLS: range=X, values=[[]] for surgical modifications.
+- APPLY_FORMULA: range=X, formula==Y. Prefer =PY() for complex logic (pivot, group-by, cleanup).
+- HIGHLIGHT: range=X, type=aboveAverage|top10|duplicate, color=#HEX.
 
-[RULES]
-- ALWAYS provide a header row for tables.
-- Match exact header names from the [WORKSHEET CONTEXT].
-- If calculating in a column, find the correct column letter (e.g., "Total" is in "E").
-- Use =PY() for advanced data processing if requested.`;
+[PRECISION RULES]
+- NEVER assume a column index. If "Total" is in column E, only use "E".
+- If a formula depends on other cells, ensure the relative references (e.g., A2, $B$1) are mathematically sound for the entire range.
+- Use =PY() for any task involving data cleaning, regex, or complex statistical analysis.
+- ALWAYS match the user's existing table formatting and headers.`;
 
 // ── DOM refs ───────────────────────────────────────────────────────────────────
 let chatMessages: HTMLElement;
@@ -326,7 +323,7 @@ async function sendMessage() {
 // ── Advanced: Get Full Worksheet Analysis ─────────────────────────────────────
 async function getFullWorksheetContext(): Promise<string> {
   let contextStr = "";
-  sheetMonitor.textContent = "Scanning...";
+  sheetMonitor.textContent = "Analyzing Schema...";
   sheetMonitor.classList.add("scanning");
 
   try {
@@ -339,34 +336,48 @@ async function getFullWorksheetContext(): Promise<string> {
       sheets.load("items/name");
       
       const usedRange = activeSheet.getUsedRangeOrNullObject(true);
-      usedRange.load("address, rowCount, columnCount, values");
+      usedRange.load("address, rowCount, columnCount");
       
       await context.sync();
       
       const sheetNames = sheets.items.map(s => s.name).join(", ");
-      contextStr = `Active Sheet: ${activeSheet.name}\nAll Sheets in Workbook: [${sheetNames}]\n`;
+      contextStr = `ACTIVE WORKBOOK SCHEMA:\n`;
+      contextStr += `- Current Sheet: "${activeSheet.name}"\n`;
+      contextStr += `- Available Sheets: [${sheetNames}]\n`;
       
       if (!usedRange.isNullObject) {
-        sheetMonitor.textContent = `${activeSheet.name} (${usedRange.address})`;
-        contextStr += `Data found in: ${usedRange.address} (${usedRange.rowCount} rows x ${usedRange.columnCount} columns)\n`;
+        sheetMonitor.textContent = `Scanning ${activeSheet.name}...`;
         
-        // Include first 5 rows as a sample for structure/headers
-        const values = usedRange.values;
-        const sampleRows = values.slice(0, 5);
-        const mdLines: string[] = [];
+        // ── Get Headers ──
+        const headerRange = usedRange.getRow(0);
+        headerRange.load("values, address");
+        await context.sync();
         
-        sampleRows.forEach((row: any[], idx: number) => {
-          const rowStr = row.map(v => String(v ?? "").substring(0, 30)).join(" | ");
-          mdLines.push(`| ${rowStr} |`);
-          if (idx === 0) {
-            mdLines.push(`| ${row.map(() => "---").join(" | ")} |`);
-          }
+        const headers = headerRange.values[0];
+        const colLetters = usedRange.address.split("!")[1].split(":")[0].replace(/[0-9]/g, "");
+        
+        contextStr += `- Data Bounds: ${usedRange.address} (${usedRange.rowCount} rows x ${usedRange.columnCount} columns)\n`;
+        contextStr += `- Detected Headers (Column Mapping):\n`;
+        
+        headers.forEach((h: any, i: number) => {
+          contextStr += `  * Col ${i + 1}: "${String(h ?? "Empty")}"\n`;
         });
-        
-        contextStr += `Sample data/Headers:\n${mdLines.join("\n")}`;
+
+        // ── Sample Data ──
+        const sampleRows = 3;
+        const sampleRange = usedRange.getRows(1, Math.min(sampleRows, usedRange.rowCount - 1));
+        sampleRange.load("values");
+        await context.sync();
+
+        contextStr += `\n[SAMPLE DATA ROWS 1-${sampleRows}]:\n`;
+        sampleRange.values.forEach((row: any[]) => {
+          contextStr += `| ${row.map(v => String(v ?? "").substring(0, 30)).join(" | ")} |\n`;
+        });
+
+        sheetMonitor.textContent = `${activeSheet.name} (${usedRange.rowCount} rows)`;
       } else {
         sheetMonitor.textContent = `${activeSheet.name} (Empty)`;
-        contextStr += "The active sheet is currently empty.";
+        contextStr += "- The active sheet is currently empty.";
       }
     });
   } catch (err) {
