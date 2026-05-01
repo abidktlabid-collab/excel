@@ -259,6 +259,10 @@ async function processAutoActions(text: string) {
   const sheets = AIParser.detectNewSheet(text);
   for (const s of sheets) await ExcelEngine.createSheet(s);
 
+  // Pivot Tables
+  const pivots = AIParser.detectPivotTable(text);
+  for (const p of pivots) await ExcelEngine.createPivotTable(p);
+
   // Tables
   const tableData = AIParser.parseResponseToTable(text);
   if (tableData && tableData.length >= 2) await ExcelEngine.writeDataToEmptyArea(tableData);

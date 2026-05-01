@@ -82,6 +82,23 @@ export function detectConditionalFormatting(text: string): { range: string; type
   return results;
 }
 
+export function detectPivotTable(text: string): { sourceRange: string; targetSheet: string; tableName: string; rows: string[]; columns: string[]; values: string[] }[] {
+  const results: any[] = [];
+  const regex = /PIVOT_TABLE:\s*sourceRange=([A-Z0-9:]+),\s*targetSheet=(.+),\s*tableName=(.+),\s*rows=\[(.+)\],\s*columns=\[(.+)\],\s*values=\[(.+)\]/gi;
+  let match;
+  while ((match = regex.exec(text)) !== null) {
+    results.push({
+      sourceRange: match[1],
+      targetSheet: match[2].trim(),
+      tableName: match[3].trim(),
+      rows: match[4].split(",").map(s => s.trim()),
+      columns: match[5].split(",").map(s => s.trim()),
+      values: match[6].split(",").map(s => s.trim())
+    });
+  }
+  return results;
+}
+
 export function parseResponseToTable(text: string): string[][] | null {
   const lines = text.split("\n").filter(l => l.trim().startsWith("|"));
   if (lines.length < 2) return null;

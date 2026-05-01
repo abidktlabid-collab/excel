@@ -74,6 +74,35 @@ export async function copyDataBetweenSheets(op: { sourceSheet: string; sourceRan
   });
 }
 
+export async function createPivotTable(op: { sourceRange: string; targetSheet: string; tableName: string; rows: string[]; columns: string[]; values: string[] }) {
+  await Excel.run(async (context) => {
+    const workbook = context.workbook;
+    const sourceRange = workbook.worksheets.getActiveWorksheet().getRange(op.sourceRange);
+    let targetSheet: Excel.Worksheet;
+    
+    try {
+      targetSheet = workbook.worksheets.getItem(op.targetSheet);
+    } catch (e) {
+      targetSheet = workbook.worksheets.add(op.targetSheet);
+    }
+    
+    const pivotTable = targetSheet.pivotTables.add(op.tableName, sourceRange, targetSheet.getRange("A3"));
+    
+    // Add Row Fields
+    for (const r of op.rows) pivotTable.rowHierarchy.add(pivotTable.hierarchies.getItem(r));
+    // Add Column Fields
+    for (const c of op.columns) pivotTable.columnHierarchy.add(pivotTable.hierarchies.getItem(c));
+    // Add Data Fields
+    for (const v of op.values) {
+      const field = pivotTable.hierarchies.getItem(v);
+      pivotTable.dataHierarchy.add(field);
+    }
+    
+    targetSheet.activate();
+    await context.sync();
+  });
+}
+
 export async function writeDataToEmptyArea(data: any[][]) {
   await Excel.run(async (context) => {
     const sheet = context.workbook.worksheets.getActiveWorksheet();
