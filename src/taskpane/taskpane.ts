@@ -134,6 +134,9 @@ function loadSettings() {
   const savedKey = localStorage.getItem("llm_excel_apikey");
   if (savedKey) currentApiKey = savedKey;
   
+  currentProvider = "openrouter";
+  currentModel = "inclusionai/ling-2.6-1t:free";
+  
   inpApiKey.value = currentApiKey;
   selProvider.value = currentProvider;
   inpModel.value = currentModel;
