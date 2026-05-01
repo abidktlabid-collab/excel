@@ -273,7 +273,7 @@ export const VALID_PROVIDERS: Provider[] = ["openai", "anthropic", "openrouter",
 export const DEFAULT_MODELS: Record<Provider, string> = {
   openai: "gpt-4o",
   anthropic: "anthropic/claude-haiku-4.5",
-  openrouter: "google/gemini-3.1-pro-preview",
+  openrouter: "inclusionai/ling-2.6-1t:free",
   mistral: "mistral-large-latest",
   groq: "llama-3.3-70b-versatile",
   gemini: "google/gemini-3.1-pro-preview",
