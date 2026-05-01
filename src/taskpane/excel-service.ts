@@ -16,6 +16,10 @@ export interface WorksheetContext {
  * ── ANALYZE: Get full worksheet data for AI context ──
  */
 export async function getFullWorksheetContext(): Promise<WorksheetContext> {
+  if (typeof Excel === "undefined") {
+    console.warn("Excel context not found. Are you running inside Excel?");
+    return { activeSheet: "Browser", range: "None", data: [["Excel not connected"]] };
+  }
   return await Excel.run(async (context) => {
     const sheet = context.workbook.worksheets.getActiveWorksheet();
     const usedRange = sheet.getUsedRange(true);
@@ -34,6 +38,10 @@ export async function getFullWorksheetContext(): Promise<WorksheetContext> {
  * ── WRITE: Safe data insertion with physical range detection ──
  */
 export async function writeData(data: any[][]): Promise<void> {
+  if (typeof Excel === "undefined") {
+    console.error("Cannot write data: Excel context missing.");
+    return;
+  }
   await Excel.run(async (context) => {
     const sheet = context.workbook.worksheets.getActiveWorksheet();
     const usedRange = sheet.getUsedRange(true);

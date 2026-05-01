@@ -64,7 +64,7 @@ function bindElements() {
   btnSend       = document.getElementById("btn-send") as HTMLButtonElement;
   btnAttach     = document.getElementById("btn-attach-selection") as HTMLButtonElement;
   settingsPanel = document.getElementById("settings-panel")!;
-  btnToggleSettings = document.getElementById("btn-toggle-settings") as HTMLButtonElement;
+  btnToggleSettings = document.getElementById("btn-settings") as HTMLButtonElement;
   inpApiKey     = document.getElementById("inp-apikey") as HTMLInputElement;
   selProvider   = document.getElementById("sel-provider") as HTMLSelectElement;
   inpModel      = document.getElementById("sel-model") as HTMLSelectElement;
@@ -73,23 +73,27 @@ function bindElements() {
 }
 
 function bindEvents() {
-  btnSend.addEventListener("click", (e) => handleUserRequest(e));
+  if (btnSend) btnSend.addEventListener("click", (e) => handleUserRequest(e));
   
-  textarea.addEventListener("input", () => {
-    btnSend.disabled = !textarea.value.trim() || isStreaming;
-  });
+  if (textarea) {
+    textarea.addEventListener("input", () => {
+      btnSend.disabled = !textarea.value.trim() || isStreaming;
+    });
 
-  textarea.addEventListener("keydown", (e) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      handleUserRequest();
-    }
-    UI.autoResize(textarea);
-  });
+    textarea.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
+        handleUserRequest();
+      }
+      UI.autoResize(textarea);
+    });
+  }
 
-  btnToggleSettings.addEventListener("click", () => {
-    settingsPanel.classList.toggle("open");
-  });
+  if (btnToggleSettings) {
+    btnToggleSettings.addEventListener("click", () => {
+      settingsPanel.classList.toggle("open");
+    });
+  }
 
   // Welcome chips
   document.querySelectorAll(".welcome__chip").forEach(chip => {
