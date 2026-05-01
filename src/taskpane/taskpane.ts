@@ -920,11 +920,12 @@ function updateConnectionStatus() {
   const hasKey = currentApiKey && currentApiKey.length > 10;
   if (hasKey) {
     statusDot.classList.add("connected");
-    statusText.textContent = `Ready — ${selProvider.options[selProvider.selectedIndex].text}`;
+    const providerLabel = selProvider.options[selProvider.selectedIndex]?.text || currentProvider;
+    statusText.textContent = `Analyst Active — ${providerLabel}`;
     btnSend.disabled = false;
   } else {
     statusDot.classList.remove("connected");
-    statusText.textContent = "Enter an API key";
+    statusText.textContent = "API Key Missing — Enter in Settings";
     btnSend.disabled = true;
   }
 }
