@@ -59,6 +59,7 @@ let footerProvider: HTMLElement;
 let sheetMonitor: HTMLElement;
 let selModel: HTMLSelectElement;
 let customModelGroup: HTMLElement;
+let toast: HTMLElement;
 
 // ── Init ───────────────────────────────────────────────────────────────────────
 Office.onReady(() => {
