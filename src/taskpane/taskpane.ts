@@ -225,6 +225,7 @@ async function streamAIResponse(retryCount = 0) {
     conversationHistory.push(assistantMsg);
 
     if (autoInsert) {
+      console.log("Auto-inserting data from response...");
       await processAutoActions(assistantMsg.content);
     }
   } catch (error: any) {
@@ -239,17 +240,28 @@ async function streamAIResponse(retryCount = 0) {
 }
 
 async function processAutoActions(text: string) {
+  console.log("Analyzing text for commands...", text.substring(0, 100) + "...");
+  
   // Charts
   const chartType = AIParser.detectChartRequest(text);
-  if (chartType) await ExcelEngine.createChartFromSelection(chartType);
+  if (chartType) {
+    console.log("Detected Chart:", chartType);
+    await ExcelEngine.createChartFromSelection(chartType);
+  }
 
   // Formulas
   const formulas = AIParser.extractFormulas(text);
-  if (formulas.length > 0) await ExcelEngine.insertFormulas(formulas);
+  if (formulas.length > 0) {
+    console.log("Detected Formulas:", formulas.length);
+    await ExcelEngine.insertFormulas(formulas);
+  }
 
   // Bulk Updates
   const updates = AIParser.detectUpdateCells(text);
-  for (const op of updates) await ExcelEngine.updateCells(op);
+  if (updates.length > 0) {
+    console.log("Detected Updates:", updates.length);
+    for (const op of updates) await ExcelEngine.updateCells(op);
+  }
 
   // Validation
   const validations = AIParser.detectValidation(text);
@@ -281,7 +293,12 @@ async function processAutoActions(text: string) {
 
   // Raw Tables (to be auto-converted)
   const tableData = AIParser.parseResponseToTable(text);
-  if (tableData && tableData.length >= 2) await ExcelEngine.writeDataToEmptyArea(tableData);
+  if (tableData && tableData.length >= 2) {
+    console.log("Detected Table Data:", tableData.length, "rows");
+    await ExcelEngine.writeDataToEmptyArea(tableData);
+  } else {
+    console.log("No table data detected in response.");
+  }
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────────────

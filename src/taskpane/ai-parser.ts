@@ -143,9 +143,17 @@ export function detectCreateTable(text: string): { range: string; name: string }
 export function parseResponseToTable(text: string): string[][] | null {
   const lines = text.split("\n").filter(l => l.trim().startsWith("|"));
   if (lines.length < 2) return null;
-  return lines.map(line => {
+
+  const dataRows = lines.map(line => {
     return line.split("|")
       .filter((_, i, arr) => i > 0 && i < arr.length - 1)
       .map(cell => cell.trim());
-  }).filter(row => row.length > 0);
+  }).filter(row => {
+    // Skip separator lines like |---|---|
+    if (row.length === 0) return false;
+    const isSeparator = row.every(cell => cell.match(/^[:\-\s]+$/));
+    return !isSeparator;
+  });
+
+  return dataRows.length > 0 ? dataRows : null;
 }
