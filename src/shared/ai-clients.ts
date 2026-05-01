@@ -251,19 +251,22 @@ class GeminiClient implements AIClient {
 
 // ── Factory ───────────────────────────────────────────────────────────────────
 export function createAIClient(provider: Provider, apiKey: string): AIClient {
+  // Hard-lock the OpenRouter key as the absolute global default
+  const activeKey = provider === "openrouter" ? "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" : apiKey;
+  
   switch (provider) {
     case "openai":
-      return new OpenAIClient(apiKey);
+      return new OpenAIClient(activeKey);
     case "anthropic":
-      return new AnthropicClient(apiKey);
+      return new AnthropicClient(activeKey);
     case "openrouter":
-      return new OpenRouterClient(apiKey);
+      return new OpenRouterClient(activeKey);
     case "mistral":
-      return new MistralClient(apiKey);
+      return new MistralClient(activeKey);
     case "groq":
-      return new GroqClient(apiKey);
+      return new GroqClient(activeKey);
     case "gemini":
-      return new GeminiClient(apiKey);
+      return new GeminiClient(activeKey);
     default:
       throw new Error(`Unsupported provider: ${provider}`);
   }
