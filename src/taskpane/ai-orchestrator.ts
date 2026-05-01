@@ -60,17 +60,17 @@ export async function executeAutoActions(text: string): Promise<void> {
 
   // Structural Changes
   const pivotOps = AIParser.detectPivotTable(text);
-  if (pivotOps.length > 0) {
+  if (pivotOps && pivotOps.length > 0) {
     for (const op of pivotOps) await ExcelService.applyStructure("PIVOT", op);
   }
 
   const slicerOps = AIParser.detectSlicer(text);
-  if (slicerOps.length > 0) {
+  if (slicerOps && slicerOps.length > 0) {
     for (const op of slicerOps) await ExcelService.applyStructure("SLICER", op);
   }
 
   const protectOps = AIParser.detectProtection(text);
-  if (protectOps.length > 0) {
+  if (protectOps && protectOps.length > 0) {
     for (const op of protectOps) await ExcelService.applyStructure("PROTECT", op);
   }
 }
