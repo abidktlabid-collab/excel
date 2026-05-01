@@ -1,85 +1,194 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 
 <head>
     <meta charset="UTF-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>LLM add-in for Excel</title>
+    <title>LLM Excel Chat</title>
+    <meta name="description" content="AI-powered Excel assistant — chat, generate data, analyze spreadsheets." />
     <script type="text/javascript" src="https://appsforoffice.microsoft.com/lib/1.1/hosted/office.js"></script>
-    <link rel="stylesheet" href="https://static2.sharepointonline.com/files/fabric/office-ui-fabric-core/11.0.0/css/fabric.min.css"/>
     <link href="taskpane.css" rel="stylesheet" type="text/css" />
 </head>
 
-<body class="ms-font-m ms-welcome ms-Fabric">
-    <div id="container">
-        <header class="ms-welcome__header">
-            <img class="ms-logo" src="https://llmexcel.liminity.se/assets/icon.svg" alt="LLM add-in for Excel" title="LLM add-in for Excel" />
-            <h1 class="ms-font-su">LLM add-in for Excel</h1>
-            <p class="ms-font-l">Powered by <a href="https://liminity.se" target="_blank">Liminity AB</a></p>
+<body>
+    <div id="app">
+
+        <!-- ── Header ──────────────────────────────────────────────────── -->
+        <header class="chat-header">
+            <div class="chat-header__brand">
+                <img class="chat-header__logo"
+                     src="https://llmexcel.liminity.se/assets/icon.svg"
+                     alt="LLM Excel" />
+                <div class="chat-header__info">
+                    <span class="chat-header__title">LLM Excel</span>
+                    <span id="sheet-monitor" class="chat-header__sheet-monitor">Scanning workbook...</span>
+                </div>
+            </div>
+            <div class="chat-header__actions">
+                <button id="btn-read-selection" class="icon-btn" title="Read selected cells into chat">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                        <polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/>
+                        <line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/>
+                    </svg>
+                </button>
+                <button id="btn-new-chat" class="icon-btn" title="New chat">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+                    </svg>
+                </button>
+                <button id="btn-settings" class="icon-btn" title="Settings">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="3"/>
+                        <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/>
+                    </svg>
+                </button>
+            </div>
         </header>
 
-        <main class="ms-welcome__main">
-            <section class="ms-welcome__features">
-                <h2 class="ms-font-xl">About</h2>
-                <p class="ms-font-m">LLM add-in for Excel is a free, open-source Excel add-in for using GPT and Anthropic inside Excel.</p>
+        <!-- ── Settings Panel ──────────────────────────────────────────── -->
+        <div id="settings-panel" class="settings-panel open">
+            <div class="settings-panel__row">
+                <div class="settings-panel__group">
+                    <label class="settings-panel__label" for="sel-provider">Provider</label>
+                    <select id="sel-provider" class="settings-panel__select">
+                        <option value="openrouter" selected>OpenRouter (Pro)</option>
+                        <option value="anthropic">Anthropic</option>
+                        <option value="gemini">Google Gemini</option>
+                        <option value="openai">OpenAI</option>
+                        <option value="mistral">Mistral</option>
+                        <option value="groq">Groq</option>
+                    </select>
+                </div>
+                <div class="settings-panel__group">
+                    <label class="settings-panel__label" for="sel-model">Model</label>
+                    <select id="sel-model" class="settings-panel__select">
+                        <option value="google/gemini-3.1-pro-preview">Gemini 3.1 Pro Preview (Best)</option>
+                        <option value="anthropic/claude-haiku-4.5">Claude 4.5 Haiku (Expert)</option>
+                        <option value="openai/gpt-4o">GPT-4o (Reliable)</option>
+                        <option value="nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free">Nemotron-3 Nano (Free)</option>
+                        <option value="google/gemma-4-31b-it:free">Google Gemma 4 (Free)</option>
+                        <option value="inclusionai/ling-2.6-1t:free">InclusionAI Ling-2.6 (Free)</option>
+                        <option value="tencent/hy3-preview:free">Tencent Hunyuan 3 (Free)</option>
+                        <option value="baidu/qianfan-ocr-fast:free">Baidu Qianfan OCR (Free)</option>
+                        <option value="xiaomi/mimo-v2.5-pro">Xiaomi Mimo v2.5 Pro</option>
+                        <option value="custom">Other (Enter Custom ID...)</option>
+                    </select>
+                </div>
+            </div>
+            <div class="settings-panel__group" id="custom-model-group" style="display: none;">
+                <label class="settings-panel__label" for="inp-model">Custom Model ID</label>
+                <input id="inp-model" class="settings-panel__input" type="text" placeholder="e.g. provider/model-name" />
+            </div>
+            <div class="settings-panel__group">
+                <label class="settings-panel__label" for="inp-apikey">API Key</label>
+                <input id="inp-apikey" class="settings-panel__input" type="password" value="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" placeholder="sk-or-..." autocomplete="off" />
+            </div>
+            <div class="settings-panel__row">
+                <div class="settings-panel__group">
+                    <label class="settings-panel__label">Auto-insert</label>
+                    <label class="toggle">
+                        <input type="checkbox" id="chk-auto-insert" checked />
+                        <span class="toggle__slider"></span>
+                        <span class="toggle__label">Insert tables to sheet</span>
+                    </label>
+                </div>
+                <div class="settings-panel__group">
+                    <div class="settings-panel__status">
+                        <span id="status-dot" class="status-dot"></span>
+                        <span id="status-text">Enter an API key to connect</span>
+                    </div>
+                </div>
+            </div>
+        </div>
 
-            </section>
-<!-- ... existing code ... -->
-<section class="ms-welcome__features">
-    <h2 class="ms-font-xl">Quick Setup</h2>
-    <p class="ms-font-m">Click the button below to insert the LLM configuration and Prompt | Answer table:</p>
-    <button id="insert-llm-setup" class="ms-Button">
-      <span class="ms-Button-label">Insert LLM Setup</span>
-    </button>
-  </section>
-  <!-- ... rest of the existing code ... -->
-            <section class="ms-welcome__features">
-                <h2 class="ms-font-xl">How to Use</h2>
-                <ol class="ms-font-m">
-                    <li>Use the PROMPT function:
-                        <code class="ms-font-m">=PROMPT(message, model, apiKey, systemPrompt, provider)</code>
-                    </li>
-                    <li>For streaming responses, use PROMPT_STREAM:
-                        <code class="ms-font-m">=PROMPT_STREAM(message, model, apiKey, systemPrompt, provider)</code>
-                    </li>
-                </ol>
-                <p class="ms-font-m">
-                    Parameters:
-                    <ul>
-                        <li><strong>message:</strong> The prompt message to send to the AI.</li>
-                        <li><strong>model:</strong> The AI model to use. See provider documentation for available models:
-                            <ul>
-                                <li><a href="https://platform.openai.com/docs/models" target="_blank">OpenAI Models</a></li>
-                                <li><a href="https://docs.anthropic.com/claude/docs/models-overview" target="_blank">Anthropic Models</a></li>
-                            </ul>
-                        </li>
-                        <li><strong>apiKey:</strong> Your API key for the chosen provider. Can be a direct string or a cell reference.</li>
-                        <li><strong>systemPrompt:</strong> (Optional) A system prompt to provide context for the AI.</li>
-                        <li><strong>provider:</strong> The AI provider to use ("openai" or "anthropic").</li>
-                    </ul>
+        <!-- ── Chat Messages ───────────────────────────────────────────── -->
+        <div id="chat-messages" class="chat-messages">
+            <div id="welcome" class="welcome">
+                <img class="welcome__icon"
+                     src="https://llmexcel.liminity.se/assets/icon.svg"
+                     alt="LLM Excel" />
+                <h1 class="welcome__title">AI Excel Assistant</h1>
+                <p class="welcome__subtitle">
+                    I can create data, analyze your spreadsheet, write formulas, and more. Try a quick action below or ask anything.
                 </p>
-                <p class="ms-font-m">Note: Both OpenAI and Anthropic integrations are available. Ensure you use the correct API key for the chosen provider.</p>
-                <p class="ms-font-m">
-                    <a href="https://github.com/liminityab/LLMExcel" target="_blank" class="ms-Link">
-                        <svg height="10" width="10" viewBox="0 0 16 16" version="1.1">
-                            <path fill-rule="evenodd" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"></path>
-                        </svg>
-                        View on GitHub
-                    </a>
-                </p>
-            </section>
 
-            <section class="ms-welcome__features">
-                <h2 class="ms-font-xl">Privacy Notice</h2>
-                <p class="ms-font-m">Your queries are sent directly to OpenAI/Anthropic servers. No data is stored by Liminity.</p>
-                <footer class="ms-welcome__footer">
-                    <p class="ms-font-s">2024 Liminity AB. All rights reserved.</p>
-                </footer>
-            </section>
-        </main>
+                <div class="welcome__section-label">📊 Generate Data</div>
+                <div class="welcome__chips">
+                    <button class="welcome__chip" data-prompt="Create a sample employee database with 15 rows: Name, Department, Position, Salary, Join Date, Email">👥 Employee Database</button>
+                    <button class="welcome__chip" data-prompt="Create a monthly budget tracker with categories: Housing, Food, Transport, Utilities, Entertainment, Savings. Include 12 months of sample data with totals.">💰 Budget Tracker</button>
+                    <button class="welcome__chip" data-prompt="Create a product inventory table with 20 items: Product ID, Name, Category, Price, Stock Qty, Reorder Level, Supplier">📦 Product Inventory</button>
+                    <button class="welcome__chip" data-prompt="Create a student marks list for 10 students with 5 subjects (Math, Science, English, History, Computer), Total, Percentage, and Grade">🎓 Student Marks</button>
+                </div>
 
+                <div class="welcome__section-label">📈 Analyze & Transform</div>
+                <div class="welcome__chips">
+                    <button class="welcome__chip" data-prompt="Read my selected data and create a summary with key statistics: count, sum, average, min, max for each numeric column">📊 Summarize Selection</button>
+                    <button class="welcome__chip" data-prompt="Read my selected data and clean it: remove duplicates, fix formatting issues, standardize text case, and fill empty cells">🧹 Clean My Data</button>
+                    <button class="welcome__chip" data-prompt="Read my selected data and generate a sales report with monthly trends, top performers, and growth percentages">📈 Sales Report</button>
+                </div>
 
+                <div class="welcome__section-label">🔧 Formula & Macro Help</div>
+                <div class="welcome__chips">
+                    <button class="welcome__chip" data-prompt="Write an Excel VLOOKUP formula to match data between two sheets, explain it step by step">🔍 VLOOKUP Help</button>
+                    <button class="welcome__chip" data-prompt="Write a VBA macro that formats all selected data as a professional table with alternating row colors and auto-fit columns">⚡ VBA Formatter</button>
+                    <button class="welcome__chip" data-prompt="Create a set of useful Excel formulas: IF, SUMIF, COUNTIF, INDEX-MATCH, with examples and explanations">📝 Formula Cheatsheet</button>
+                </div>
+
+                <div class="welcome__section-label">📋 Data Validation</div>
+                <div class="welcome__chips">
+                    <button class="welcome__chip" data-prompt="Add a dropdown list to cells A1:A20 with values: Active, Inactive, Pending, Suspended. Use VALIDATION: range=A1:A20, type=list, values=Active,Inactive,Pending,Suspended">📋 Status Dropdown</button>
+                    <button class="welcome__chip" data-prompt="Add number validation to cells B2:B50 allowing only values between 0 and 100 for percentage scores. Use VALIDATION: range=B2:B50, type=number, min=0, max=100">🔢 Number Validation</button>
+                    <button class="welcome__chip" data-prompt="Add a dropdown to cells C1:C30 with department options: Engineering, Marketing, Sales, Finance, HR, Operations. Use VALIDATION: range=C1:C30, type=list, values=Engineering,Marketing,Sales,Finance,HR,Operations">🏢 Department List</button>
+                </div>
+
+                <div class="welcome__section-label">📄 Multi-Sheet Operations</div>
+                <div class="welcome__chips">
+                    <button class="welcome__chip" data-prompt="Create a new sheet called Summary. NEWSHEET: Summary">📄 New Summary Sheet</button>
+                    <button class="welcome__chip" data-prompt="Create 3 new sheets for organizing data. NEWSHEET: Dashboard\nNEWSHEET: Raw Data\nNEWSHEET: Analysis">📑 Create Workbook Sheets</button>
+                    <button class="welcome__chip" data-prompt="Copy data from Sheet1 range A1:F20 to a new sheet called Backup. COPYDATA: sourceSheet=Sheet1, sourceRange=A1:F20, targetSheet=Backup">📋 Backup Sheet Data</button>
+                </div>
+
+                <div class="welcome__section-label">🎨 Conditional Formatting</div>
+                <div class="welcome__chips">
+                    <button class="welcome__chip" data-prompt="Highlight all cells above average in range B2:B50 with green color. HIGHLIGHT: range=B2:B50, type=aboveAverage, color=#92D050">🟢 Above Average</button>
+                    <button class="welcome__chip" data-prompt="Highlight all cells below average in range B2:B50 with red color. HIGHLIGHT: range=B2:B50, type=belowAverage, color=#FF6B6B">🔴 Below Average</button>
+                    <button class="welcome__chip" data-prompt="Apply a Red-Yellow-Green color scale to range D1:D30 to visualize data distribution. COLORSCALE: range=D1:D30, low=#F8696B, mid=#FFEB84, high=#63BE7B">🌈 Color Scale</button>
+                    <button class="welcome__chip" data-prompt="Highlight duplicate values in range A1:A50 with pink background. HIGHLIGHT: range=A1:A50, type=duplicates, color=#FFC7CE">📌 Find Duplicates</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── Input Area ──────────────────────────────────────────────── -->
+        <div class="chat-input">
+            <div class="chat-input__wrapper">
+                <button id="btn-attach-selection" class="chat-input__attach" title="Attach selected cells to message">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                        <line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/>
+                    </svg>
+                </button>
+                <textarea id="chat-textarea"
+                          class="chat-input__textarea"
+                          placeholder="Ask anything or try a quick action above…"
+                          rows="1"></textarea>
+                <button id="btn-send" class="chat-input__send" title="Send message" disabled>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="chat-input__footer">
+                <span class="chat-input__provider-badge">
+                    <span class="chat-input__provider-dot"></span>
+                    <span id="footer-provider">OpenRouter · gpt-4o</span>
+                </span>
+                <span class="chat-input__hint">📎 = attach cells · Enter = send</span>
+            </div>
+        </div>
+
+        <div id="toast" class="context-toast"></div>
     </div>
 </body>
 

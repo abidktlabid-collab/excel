@@ -4,7 +4,7 @@ const devCerts = require("office-addin-dev-certs");
 const CopyWebpackPlugin = require("copy-webpack-plugin");
 const CustomFunctionsMetadataPlugin = require("custom-functions-metadata-plugin");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
-const urlDev = "https://localhost:3000/";
+const urlDev = "https://192.168.100.15:3000/";
 const urlProd = "https://llmexcel.liminity.se/";
 
 /* global require, module, process */
@@ -83,6 +83,11 @@ module.exports = async (env, options) => {
               }
             },
           },
+          {
+            from: "public/_redirects",
+            to: "[name]",
+            noErrorOnMissing: true,
+          },
         ],
       }),
     ],
@@ -90,6 +95,8 @@ module.exports = async (env, options) => {
       headers: {
         "Access-Control-Allow-Origin": "*",
       },
+      host: "0.0.0.0",
+      allowedHosts: "all",
       server: {
         type: "https",
         options: env.WEBPACK_BUILD || options.https !== undefined ? options.https : await getHttpsOptions(),

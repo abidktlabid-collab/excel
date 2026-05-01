@@ -1,104 +1,15 @@
-﻿/* global  console, CustomFunctions  */
-import { OpenAI } from "openai";
-import Anthropic from "@anthropic-ai/sdk";
-import { MessageParam } from "@anthropic-ai/sdk/resources";
-
-type Provider = "openai" | "anthropic";
-type Message = { role: "user" | "system"; content: string };
-
-interface AIClient {
-  generateCompletion(messages: Message[], model: string): Promise<string>;
-  generateStreamingCompletion(messages: Message[], model: string, onChunk: (chunk: string) => void): Promise<void>;
-}
-
-class OpenAIClient implements AIClient {
-  private client: OpenAI;
-
-  constructor(apiKey: string) {
-    this.client = new OpenAI({ apiKey, dangerouslyAllowBrowser: true });
-  }
-
-  async generateCompletion(messages: Message[], model: string): Promise<string> {
-    const response = await this.client.chat.completions.create({ messages, model });
-    return response.choices[0].message.content || "No content in response";
-  }
-
-  async generateStreamingCompletion(
-    messages: Message[],
-    model: string,
-    onChunk: (chunk: string) => void
-  ): Promise<void> {
-    const stream = await this.client.chat.completions.create({ messages, model, stream: true });
-    for await (const chunk of stream) {
-      const content = chunk.choices[0]?.delta?.content || "";
-      onChunk(content);
-    }
-  }
-}
-
-class AnthropicClient implements AIClient {
-  private client: Anthropic;
-
-  constructor(apiKey: string) {
-    this.client = new Anthropic({ apiKey, dangerouslyAllowBrowser: true });
-  }
-
-  async generateCompletion(messages: Message[], model: string): Promise<string> {
-    const systemMessage = messages.find((msg) => msg.role === "system");
-    const userMessages = messages.filter((msg) => msg.role === "user");
-
-    const response = await this.client.messages.create({
-      messages: userMessages as MessageParam[],
-      model,
-      max_tokens: 1000,
-      system: systemMessage?.content,
-    });
-    return response.content[0].type === "text" ? response.content[0].text : "";
-  }
-
-  async generateStreamingCompletion(
-    messages: Message[],
-    model: string,
-    onChunk: (chunk: string) => void
-  ): Promise<void> {
-    const systemMessage = messages.find((msg) => msg.role === "system");
-    const userMessages = messages.filter((msg) => msg.role === "user");
-
-    const stream = await this.client.messages.create({
-      messages: userMessages as MessageParam[],
-      model,
-      max_tokens: 1000,
-      stream: true,
-      system: systemMessage?.content,
-    });
-    for await (const chunk of stream) {
-      if (chunk.type === "content_block_delta" && chunk.delta.type === "text_delta") {
-        onChunk(chunk.delta.text);
-      }
-    }
-  }
-}
-
-function createAIClient(provider: Provider, apiKey: string): AIClient {
-  switch (provider) {
-    case "openai":
-      return new OpenAIClient(apiKey);
-    case "anthropic":
-      return new AnthropicClient(apiKey);
-    default:
-      throw new Error(`Unsupported provider: ${provider}`);
-  }
-}
+/* global  console, CustomFunctions  */
+import { createAIClient, VALID_PROVIDERS, Provider, Message } from "../shared/ai-clients";
 
 /**
  * Generates a response based on the given prompt using the specified AI model and provider.
  * @customfunction PROMPT
  * @helpUrl https://llmexcel.liminity.se/help
- * @param message The prompt message to send to the AI. a
+ * @param message The prompt message to send to the AI.
  * @param model The AI model to use for generating the response.
  * @param apiKey The API key for the AI service.
  * @param systemPrompt An optional system prompt to provide context for the AI.
- * @param provider The AI provider to use (either "openai" or "anthropic").
+ * @param provider The AI provider to use ("openai", "anthropic", "openrouter", "mistral", "groq", or "gemini").
  * @returns A promise that resolves to the generated response.
  */
 export async function prompt(
@@ -113,11 +24,12 @@ export async function prompt(
       throw new Error("Missing required parameters");
     }
 
-    if (!["openai", "anthropic"].includes(provider.toLowerCase())) {
-      throw new Error("Invalid provider. Must be 'openai' or 'anthropic'");
+    const normalizedProvider = provider.toLowerCase() as Provider;
+    if (!VALID_PROVIDERS.includes(normalizedProvider)) {
+      throw new Error(`Invalid provider. Must be one of: ${VALID_PROVIDERS.join(", ")}`);
     }
 
-    const client = createAIClient(provider.toLowerCase() as Provider, apiKey);
+    const client = createAIClient(normalizedProvider, apiKey);
     const messages: Message[] = systemPrompt
       ? [
           { role: "system", content: systemPrompt },
@@ -149,7 +61,7 @@ export async function prompt(
  * @param model The AI model to use for generating the response.
  * @param apiKey The API key for the AI service.
  * @param systemPrompt An optional system prompt to provide context for the AI.
- * @param provider The AI provider to use (either "openai" or "anthropic").
+ * @param provider The AI provider to use ("openai", "anthropic", "openrouter", "mistral", "groq", or "gemini").
  * @param invocation The streaming invocation object
  */
 export function promptStream(
@@ -165,11 +77,12 @@ export function promptStream(
       throw new Error("Missing required parameters");
     }
 
-    if (!["openai", "anthropic"].includes(provider.toLowerCase())) {
-      throw new Error("Invalid provider. Must be 'openai' or 'anthropic'");
+    const normalizedProvider = provider.toLowerCase() as Provider;
+    if (!VALID_PROVIDERS.includes(normalizedProvider)) {
+      throw new Error(`Invalid provider. Must be one of: ${VALID_PROVIDERS.join(", ")}`);
     }
 
-    const client = createAIClient(provider.toLowerCase() as Provider, apiKey);
+    const client = createAIClient(normalizedProvider, apiKey);
     let fullResponse = "";
 
     const messages: Message[] = systemPrompt
