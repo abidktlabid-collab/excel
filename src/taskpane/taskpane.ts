@@ -165,7 +165,9 @@ function bindEvents() {
 
   textarea.addEventListener("input", () => {
     autoResize(textarea);
-    btnSend.disabled = !textarea.value.trim() || isStreaming;
+    const hasText = !!textarea.value.trim();
+    const hasKey = currentApiKey && currentApiKey.length > 10;
+    btnSend.disabled = !hasText || !hasKey || isStreaming;
   });
 
   textarea.addEventListener("keydown", (e: KeyboardEvent) => {
@@ -271,37 +273,51 @@ async function sendMessage() {
   let text = textarea.value.trim();
   if (!text || isStreaming) return;
 
-  if (!currentApiKey) {
-    showToast("⚠️ Enter an API key in Settings");
-    settingsPanel.classList.add("open");
-    btnSettings.classList.add("active");
-    return;
-  }
-
-  // ── Auto-gather Advanced Sheet Context ──
-  const sheetContext = await getFullWorksheetContext();
-  
-  let fullPrompt = `[WORKSHEET CONTEXT]\n${sheetContext}\n\n`;
-  if (attachedCellData) {
-    fullPrompt += `📎 Selected/Attached Data:\n${attachedCellData}\n\n`;
-    attachedCellData = null;
-    textarea.placeholder = "Ask anything or try a quick action above…";
-  }
-  fullPrompt += `[USER QUERY]\n${text}`;
-
-  if (welcomeEl) welcomeEl.style.display = "none";
-
-  // Note: We send the user query to the UI, but the full context to the AI
-  const userMsg: ChatMessage = { role: "user", content: text, timestamp: new Date() };
-  conversationHistory.push({ role: "user", content: fullPrompt, timestamp: new Date() });
-  
-  appendMessageBubble(userMsg);
-
-  textarea.value = "";
-  autoResize(textarea);
+  // Disable immediately to prevent double-click
   btnSend.disabled = true;
+  const originalPlaceholder = textarea.placeholder;
 
-  await streamAIResponse();
+  try {
+    if (!currentApiKey) {
+      showToast("⚠️ Enter an API key in Settings");
+      settingsPanel.classList.add("open");
+      btnSettings.classList.add("active");
+      return;
+    }
+
+    // ── Auto-gather Advanced Sheet Context ──
+    const sheetContext = await getFullWorksheetContext();
+    
+    let fullPrompt = `[WORKSHEET CONTEXT]\n${sheetContext}\n\n`;
+    if (attachedCellData) {
+      fullPrompt += `📎 Selected/Attached Data:\n${attachedCellData}\n\n`;
+      attachedCellData = null;
+      textarea.placeholder = "Ask anything or try a quick action above…";
+    }
+    fullPrompt += `[USER QUERY]\n${text}`;
+
+    if (welcomeEl) welcomeEl.style.display = "none";
+
+    // Note: We send the user query to the UI, but the full context to the AI
+    const userMsg: ChatMessage = { role: "user", content: text, timestamp: new Date() };
+    conversationHistory.push({ role: "user", content: fullPrompt, timestamp: new Date() });
+    
+    appendMessageBubble(userMsg);
+
+    textarea.value = "";
+    autoResize(textarea);
+    
+    await streamAIResponse();
+  } catch (err) {
+    console.error("SendMessage Error:", err);
+    showToast("⚠️ Message failed to send");
+    textarea.placeholder = originalPlaceholder;
+  } finally {
+    // Only re-enable if not streaming (handled by streamAIResponse finally too, but safety first)
+    if (!isStreaming) {
+      updateConnectionStatus(); // This will enable btnSend if key is present
+    }
+  }
 }
 
 // ── Advanced: Get Full Worksheet Analysis ─────────────────────────────────────
