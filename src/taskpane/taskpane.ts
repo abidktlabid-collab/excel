@@ -263,6 +263,18 @@ async function processAutoActions(text: string) {
   const pivots = AIParser.detectPivotTable(text);
   for (const p of pivots) await ExcelEngine.createPivotTable(p);
 
+  // Slicers
+  const slicers = AIParser.detectSlicer(text);
+  for (const s of slicers) await ExcelEngine.addSlicer(s);
+
+  // Protection
+  const protection = AIParser.detectProtection(text);
+  for (const p of protection) await ExcelEngine.protectSheet(p);
+
+  // Themes
+  const themes = AIParser.detectTheme(text);
+  for (const t of themes) await ExcelEngine.applyExecutiveTheme(t);
+
   // Tables
   const tableData = AIParser.parseResponseToTable(text);
   if (tableData && tableData.length >= 2) await ExcelEngine.writeDataToEmptyArea(tableData);

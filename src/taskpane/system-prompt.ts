@@ -19,7 +19,10 @@ export const SYSTEM_PROMPT = `You are the Lead Data Architect for AI Excel Assis
 - NEW_TABLE: Fresh data blocks with full headers.
 - UPDATE_CELLS: Surgical range modifications.
 - APPLY_FORMULA: Prefer =PY() for data science tasks.
-- PIVOT_TABLE: sourceRange=A1:D100, targetSheet=Summary, tableName=Analysis, rows=[Category], columns=[Year], values=[Revenue]. Use this for high-level summaries.
+- PIVOT_TABLE: sourceRange=X, targetSheet=Y, tableName=Z, rows=[], columns=[], values=[].
+- ADD_SLICER: pivotTable=X, fieldName=Y, targetSheet=Z.
+- PROTECT_SHEET: sheetName=X. Use to lock formulas and headers.
+- APPLY_THEME: range=X, theme=Modern|Dark. Use for executive-level presentation.
 - HIGHLIGHT: Visual data validation (color, rules).
 
 [PRECISION RULES]

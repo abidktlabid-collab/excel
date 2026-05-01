@@ -99,6 +99,36 @@ export function detectPivotTable(text: string): { sourceRange: string; targetShe
   return results;
 }
 
+export function detectSlicer(text: string): { pivotTable: string; fieldName: string; targetSheet: string }[] {
+  const results: any[] = [];
+  const regex = /ADD_SLICER:\s*pivotTable=(.+),\s*fieldName=(.+),\s*targetSheet=(.+)/gi;
+  let match;
+  while ((match = regex.exec(text)) !== null) {
+    results.push({ pivotTable: match[1].trim(), fieldName: match[2].trim(), targetSheet: match[3].trim() });
+  }
+  return results;
+}
+
+export function detectProtection(text: string): { sheetName: string; password?: string }[] {
+  const results: any[] = [];
+  const regex = /PROTECT_SHEET:\s*sheetName=(.+)/gi;
+  let match;
+  while ((match = regex.exec(text)) !== null) {
+    results.push({ sheetName: match[1].trim() });
+  }
+  return results;
+}
+
+export function detectTheme(text: string): { range: string; theme: "Modern" | "Classic" | "Dark" }[] {
+  const results: any[] = [];
+  const regex = /APPLY_THEME:\s*range=([A-Z0-9:]+),\s*theme=(\w+)/gi;
+  let match;
+  while ((match = regex.exec(text)) !== null) {
+    results.push({ range: match[1], theme: match[2] as any });
+  }
+  return results;
+}
+
 export function parseResponseToTable(text: string): string[][] | null {
   const lines = text.split("\n").filter(l => l.trim().startsWith("|"));
   if (lines.length < 2) return null;

@@ -103,6 +103,49 @@ export async function createPivotTable(op: { sourceRange: string; targetSheet: s
   });
 }
 
+export async function addSlicer(op: { pivotTable: string; fieldName: string; targetSheet: string }) {
+  await Excel.run(async (context) => {
+    const sheet = context.workbook.worksheets.getItem(op.targetSheet);
+    const pivot = sheet.pivotTables.getItem(op.pivotTable);
+    sheet.slicers.add(pivot, op.fieldName, sheet.getRange("G3"));
+    await context.sync();
+  });
+}
+
+export async function protectSheet(op: { sheetName: string; password?: string }) {
+  await Excel.run(async (context) => {
+    const sheet = context.workbook.worksheets.getItem(op.sheetName);
+    sheet.protection.protect({
+      allowInsertRows: false,
+      allowDeleteRows: false,
+      selectionMode: Excel.ProtectionSelectionMode.unlocked
+    }, op.password);
+    await context.sync();
+  });
+}
+
+export async function applyExecutiveTheme(op: { range: string; theme: "Modern" | "Classic" | "Dark" }) {
+  await Excel.run(async (context) => {
+    const range = context.workbook.worksheets.getActiveWorksheet().getRange(op.range);
+    range.format.fill.clear();
+    range.format.font.name = "Segoe UI";
+    
+    if (op.theme === "Modern") {
+      range.format.fill.color = "#F3F4F6";
+      range.format.font.color = "#111827";
+      range.getRow(0).format.fill.color = "#2563EB";
+      range.getRow(0).format.font.color = "white";
+    } else if (op.theme === "Dark") {
+      range.format.fill.color = "#1F2937";
+      range.format.font.color = "#F9FAFB";
+      range.getRow(0).format.fill.color = "#111827";
+    }
+    
+    range.format.autofitColumns();
+    await context.sync();
+  });
+}
+
 export async function writeDataToEmptyArea(data: any[][]) {
   await Excel.run(async (context) => {
     const sheet = context.workbook.worksheets.getActiveWorksheet();
