@@ -10,8 +10,9 @@
   <HighResolutionIconUrl DefaultValue="https://excelco.netlify.app/assets/icon-64.png"/>
   <SupportUrl DefaultValue="https://www.liminity.se/"/>
   <AppDomains>
-    <AppDomain>https://llmexcel.liminity.se</AppDomain>
     <AppDomain>https://excelco.netlify.app</AppDomain>
+    <AppDomain>https://www.excelco.netlify.app</AppDomain>
+    <AppDomain>https://llmexcel.liminity.se</AppDomain>
   </AppDomains>
   <Hosts>
     <Host Name="Workbook"/>
