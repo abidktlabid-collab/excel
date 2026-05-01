@@ -99,8 +99,8 @@ class OpenRouterClient implements AIClient {
       baseURL: "https://openrouter.ai/api/v1",
       dangerouslyAllowBrowser: true,
       defaultHeaders: {
-        "HTTP-Referer": "https://aiexcelpoilot.netlify.app",
-        "X-Title": "AI Excel Assistant Pro",
+        "HTTP-Referer": "https://excelco.netlify.app",
+        "X-Title": "AI Excel Assistant Pro - excelco",
       },
     });
   }
