@@ -51,13 +51,47 @@ export function appendTypingIndicator(container: HTMLElement): HTMLElement {
 }
 
 export function formatContent(text: string): string {
-  let html = escapeHtml(text);
-  // Simple markdown-ish bold
+  // ── Ghost Mode: Mask technical execution commands ──
+  const lines = text.split("\n");
+  const cleanedLines = lines.map(line => {
+    const isTech = /\[EXECUTION\]|UPDATE_CELLS:|NEW_TABLE:|CREATE_TABLE:|PIVOT_TABLE:|ADD_SLICER:|PROTECT_SHEET:|APPLY_THEME:|HIGHLIGHT:|APPLY_FORMULA:/i.test(line);
+    if (isTech) {
+      return `<span class="tech-mask">${escapeHtml(line)}</span>`;
+    }
+    return line;
+  });
+
+  let html = cleanedLines.join("\n");
+  
+  // ── Professional Markdown Rendering ──
+  
+  // Headers (e.g. ### Header)
+  html = html.replace(/^### (.*$)/gim, "<h3>$1</h3>");
+  
+  // Bold (e.g. **text**)
   html = html.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
-  // Simple code blocks
+  
+  // Lists (e.g. * Item or - Item)
+  html = html.replace(/^\* (.*$)/gim, "<li>$1</li>");
+  html = html.replace(/^- (.*$)/gim, "<li>$1</li>");
+  
+  // Wrap li in ul
+  html = html.replace(/(<li>.*<\/li>)/gs, "<ul>$1</ul>");
+  
+  // Code Blocks (e.g. ```code```)
   html = html.replace(/```([\s\S]*?)```/g, '<pre class="code-block">$1</pre>');
-  // Newlines
+  
+  // Inline Code (e.g. `code`)
+  html = html.replace(/`(.*?)`/g, "<code>$1</code>");
+  
+  // Newlines (only if not already converted to block elements)
   html = html.replace(/\n/g, "<br>");
+  
+  // Clean up double br around block elements
+  html = html.replace(/<\/h3><br>/g, "</h3>");
+  html = html.replace(/<\/ul><br>/g, "</ul>");
+  html = html.replace(/<\/pre><br>/g, "</pre>");
+
   return html;
 }
 

@@ -740,3 +740,42 @@ html, body {
   0%, 100% { box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.3); }
   50% { box-shadow: 0 0 0 4px rgba(251, 191, 36, 0); }
 }
+
+/* ── Markdown & Clean UI Enhancements ───────────────────────────────────────── */
+.message__content h3 {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--accent);
+  margin: 12px 0 6px;
+  letter-spacing: -0.2px;
+}
+
+.message__content ul, .message__content ol {
+  margin: 8px 0;
+  padding-left: 18px;
+}
+
+.message__content li {
+  margin-bottom: 4px;
+}
+
+.message__content li::marker {
+  color: var(--accent);
+}
+
+.message__content strong {
+  color: var(--text-inverse);
+  font-weight: 600;
+}
+
+/* Technical Masking */
+.message__content .tech-mask {
+  display: none !important;
+}
+
+.message__content hr {
+  border: none;
+  border-top: 1px solid var(--border-strong);
+  margin: 12px 0;
+}
+
