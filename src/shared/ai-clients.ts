@@ -90,17 +90,20 @@ class AnthropicClient implements AIClient {
 }
 
 // ── OpenRouter ────────────────────────────────────────────────────────────────
-class OpenRouterClient implements AIClient {
+export class OpenRouterClient implements AIClient {
   private client: OpenAI;
-
   constructor(apiKey: string) {
+    // Sanitize key to remove any hidden whitespace
+    const cleanKey = apiKey.trim();
+    console.log("OpenRouter initialization. Key length:", cleanKey.length);
+
     this.client = new OpenAI({
-      apiKey,
+      apiKey: cleanKey,
       baseURL: "https://openrouter.ai/api/v1",
       dangerouslyAllowBrowser: true,
       defaultHeaders: {
         "HTTP-Referer": "https://excelco.netlify.app",
-        "X-Title": "AI Excel Assistant Pro - excelco",
+        "X-Title": "LLM Excel Assistant Pro",
       },
     });
   }
@@ -251,8 +254,9 @@ class GeminiClient implements AIClient {
 
 // ── Factory ───────────────────────────────────────────────────────────────────
 export function createAIClient(provider: Provider, apiKey: string): AIClient {
-  // Hard-lock the OpenRouter key as the absolute global default
-  const activeKey = provider === "openrouter" ? "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" : apiKey;
+  // Hard-lock the OpenRouter key as the absolute global default (Sanitized)
+  const hardcodedKey = "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".trim();
+  const activeKey = provider === "openrouter" ? hardcodedKey : apiKey.trim();
   
   switch (provider) {
     case "openai":
