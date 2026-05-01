@@ -53,7 +53,7 @@ function bindElements() {
 }
 
 function bindEvents() {
-  btnSend.addEventListener("click", handleUserRequest);
+  btnSend.addEventListener("click", (e) => handleUserRequest(e));
   
   textarea.addEventListener("input", () => {
     btnSend.disabled = !textarea.value.trim() || isStreaming;
@@ -94,9 +94,19 @@ function bindEvents() {
 }
 
 // ── Request Orchestration ──────────────────────────────────────────────────────
-async function handleUserRequest() {
+async function handleUserRequest(e?: Event) {
+  if (e) {
+    e.preventDefault();
+    e.stopPropagation();
+  }
+  
   const text = textarea.value.trim();
-  if (!text || isStreaming) return;
+  console.log("SEND CLICKED. Input length:", text.length);
+  
+  if (!text || isStreaming) {
+    console.log("Send blocked: text empty or already streaming");
+    return;
+  }
 
   isStreaming = true;
   btnSend.disabled = true;
