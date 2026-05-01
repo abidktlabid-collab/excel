@@ -31,6 +31,11 @@ Office.onReady((info) => {
   if (info.host === Office.HostType.Excel) {
     bindElements();
     bindEvents();
+    
+    // ── Force Default Model Overrides ──
+    currentProvider = "openrouter";
+    currentModel = "inclusionai/ling-2.6-1t:free";
+    
     loadSettings();
     console.log("AI Excel Assistant Pro - Ready");
   }
