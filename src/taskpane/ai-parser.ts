@@ -163,6 +163,15 @@ export function parseResponseToTable(text: string): string[][] | null {
     return !isSeparator;
   });
 
-  // Final check: Must have at least a header and one row of data
-  return dataRows.length >= 1 ? dataRows : null;
+  // Final check: Must have at least one row of data
+  if (dataRows.length === 0) return null;
+  
+  // If the AI forgot headers (no separator line found or data looks like first row),
+  // we add dummy headers to satisfy Excel Table requirements.
+  if (dataRows.length === 1) {
+    const dummyHeader = dataRows[0].map((_, i) => `Column ${i + 1}`);
+    return [dummyHeader, ...dataRows];
+  }
+
+  return dataRows;
 }
