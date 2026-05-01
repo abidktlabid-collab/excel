@@ -1,10 +1,102 @@
 /* global console, document, Excel, Office */
 import { createAIClient, VALID_PROVIDERS, DEFAULT_MODELS, Provider, Message } from "../shared/ai-clients";
-import * as ExcelEngine from "./excel-engine";
 import * as AIParser from "./ai-parser";
 import * as UI from "./ui-components";
 import { ChatMessage } from "./ui-components";
 import { SYSTEM_PROMPT } from "./system-prompt";
+
+/* global console, document, Excel, Office */
+
+// ── Shared Engine (Re-integrated for Context Stability) ──────────────────────────
+const ExcelEngine = {
+  async writeDataToEmptyArea(data: any[][]) {
+    await Excel.run(async (context) => {
+      const sheet = context.workbook.worksheets.getActiveWorksheet();
+      const usedRange = sheet.getUsedRange(true);
+      usedRange.load("rowCount");
+      await context.sync();
+      let startRow = 0;
+      try { if (usedRange && usedRange.rowCount > 0) startRow = usedRange.rowCount + 2; } catch (e) { startRow = 0; }
+      const targetRange = sheet.getRangeByIndexes(startRow, 0, data.length, data[0].length);
+      targetRange.values = data;
+      targetRange.format.autofitColumns();
+      await context.sync();
+      try { sheet.tables.add(targetRange, true); await context.sync(); } catch (e) {}
+    });
+  },
+  async getFullWorksheetContext() {
+    return await Excel.run(async (context) => {
+      const sheet = context.workbook.worksheets.getActiveWorksheet();
+      const usedRange = sheet.getUsedRange(true);
+      usedRange.load(["address", "values"]);
+      await context.sync();
+      return { activeSheet: sheet.name, range: usedRange.address, data: usedRange.values };
+    });
+  },
+  async createChartFromSelection(type: string) {
+    await Excel.run(async (context) => {
+      const range = context.workbook.getSelectedRange();
+      context.workbook.worksheets.getActiveWorksheet().charts.add(type as any, range, "Auto" as any);
+      await context.sync();
+    });
+  },
+  async insertFormulas(formulas: any[]) {
+    await Excel.run(async (context) => {
+      const sheet = context.workbook.worksheets.getActiveWorksheet();
+      for (const f of formulas) { sheet.getRange(f.range).values = [[f.formula]]; }
+      await context.sync();
+    });
+  },
+  async updateCells(op: any) {
+    await Excel.run(async (context) => {
+      context.workbook.worksheets.getActiveWorksheet().getRange(op.range).values = op.values;
+      await context.sync();
+    });
+  },
+  async applyExecutiveTheme(op: any) {
+    await Excel.run(async (context) => {
+      const range = context.workbook.worksheets.getActiveWorksheet().getRange(op.range);
+      range.format.fill.color = op.theme === "Dark" ? "#1e232b" : "#f8fafc";
+      range.format.font.color = op.theme === "Dark" ? "#ffffff" : "#0f172a";
+      await context.sync();
+    });
+  },
+  async createPivotTable(op: any) {
+    await Excel.run(async (context) => {
+      const workbook = context.workbook;
+      const sourceRange = workbook.worksheets.getActiveWorksheet().getRange(op.sourceRange);
+      let targetSheet = workbook.worksheets.getItemOrNullObject(op.targetSheet);
+      await context.sync();
+      if (targetSheet.isNullObject) targetSheet = workbook.worksheets.add(op.targetSheet);
+      const pivotTable = targetSheet.pivotTables.add(op.tableName, sourceRange, "A3");
+      for (const r of op.rows) pivotTable.rowHierarchies.add(pivotTable.hierarchies.getItem(r));
+      for (const v of op.values) pivotTable.dataHierarchies.add(pivotTable.hierarchies.getItem(v));
+      await context.sync();
+    });
+  },
+  async addSlicer(op: any) {
+    await Excel.run(async (context) => {
+      const sheet = context.workbook.worksheets.getItem(op.targetSheet);
+      const pivot = context.workbook.pivotTables.getItem(op.pivotTable);
+      sheet.slicers.add(pivot, op.fieldName);
+      await context.sync();
+    });
+  },
+  async protectSheet(op: any) {
+    await Excel.run(async (context) => {
+      context.workbook.worksheets.getItem(op.sheetName).protection.protect();
+      await context.sync();
+    });
+  },
+  async createNamedTable(op: any) {
+    await Excel.run(async (context) => {
+      const range = context.workbook.worksheets.getActiveWorksheet().getRange(op.range);
+      const table = context.workbook.worksheets.getActiveWorksheet().tables.add(range, true);
+      table.name = op.name.replace(/\s+/g, "_");
+      await context.sync();
+    });
+  }
+};
 
 // ── State ──────────────────────────────────────────────────────────────────────
 let conversationHistory: any[] = [];
