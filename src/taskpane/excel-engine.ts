@@ -150,14 +150,15 @@ export async function writeDataToEmptyArea(data: any[][]) {
   await Excel.run(async (context) => {
     const sheet = context.workbook.worksheets.getActiveWorksheet();
     
-    // 1. Find the next safe spot
+    // 1. Find the next safe spot (absolute bottom of used range)
     const usedRange = sheet.getUsedRangeOrNullObject(true);
-    usedRange.load("rowCount");
+    const lastCell = usedRange.getLastCellOrNullObject();
+    lastCell.load("rowIndex");
     await context.sync();
 
     let startRow = 0;
-    if (!usedRange.isNullObject) {
-      startRow = usedRange.rowCount + 2; // Add a 2-row buffer
+    if (!lastCell.isNullObject) {
+      startRow = lastCell.rowIndex + 2; // Move 2 rows below the absolute last row
     }
 
     const targetRange = sheet.getRangeByIndexes(startRow, 0, data.length, data[0].length);

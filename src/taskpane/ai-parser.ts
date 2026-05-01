@@ -141,10 +141,18 @@ export function detectCreateTable(text: string): { range: string; name: string }
 }
 
 export function parseResponseToTable(text: string): string[][] | null {
-  const lines = text.split("\n").filter(l => l.trim().startsWith("|"));
-  if (lines.length < 2) return null;
+  // 1. Clean the text of markdown code blocks which often wrap tables
+  const cleanText = text.replace(/```markdown|```/g, "");
+  const lines = cleanText.split("\n");
+  
+  const tableLines = lines.filter(l => {
+    const trimmed = l.trim();
+    return trimmed.startsWith("|") && trimmed.endsWith("|");
+  });
 
-  const dataRows = lines.map(line => {
+  if (tableLines.length < 2) return null;
+
+  const dataRows = tableLines.map(line => {
     return line.split("|")
       .filter((_, i, arr) => i > 0 && i < arr.length - 1)
       .map(cell => cell.trim());
@@ -155,5 +163,6 @@ export function parseResponseToTable(text: string): string[][] | null {
     return !isSeparator;
   });
 
-  return dataRows.length > 0 ? dataRows : null;
+  // Final check: Must have at least a header and one row of data
+  return dataRows.length >= 1 ? dataRows : null;
 }
