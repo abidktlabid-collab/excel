@@ -55,6 +55,10 @@ function bindElements() {
 function bindEvents() {
   btnSend.addEventListener("click", handleUserRequest);
   
+  textarea.addEventListener("input", () => {
+    btnSend.disabled = !textarea.value.trim() || isStreaming;
+  });
+
   textarea.addEventListener("keydown", (e) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
@@ -129,7 +133,7 @@ async function handleUserRequest() {
     UI.updateExecutionStatus(assistantBubble, "error");
   } finally {
     isStreaming = false;
-    btnSend.disabled = false;
+    btnSend.disabled = !textarea.value.trim();
     UI.scrollToBottom(chatMessages);
   }
 }
