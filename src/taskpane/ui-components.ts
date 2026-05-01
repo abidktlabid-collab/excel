@@ -19,10 +19,6 @@ export function appendMessageBubble(
   const body = document.createElement("div");
   body.className = "message__body";
 
-  const meta = document.createElement("div");
-  meta.className = "message__meta";
-  meta.textContent = formatTime(msg.timestamp);
-
   const contentEl = document.createElement("div");
   contentEl.className = "message__content";
   
@@ -32,6 +28,17 @@ export function appendMessageBubble(
     contentEl.innerHTML = formatContent(msg.content);
   }
 
+  const meta = document.createElement("div");
+  meta.className = "message__meta";
+  
+  const hasTable = msg.content.includes("|") && msg.role === "assistant";
+
+  meta.innerHTML = `
+    <span class="message__time">${formatTime(msg.timestamp)}</span>
+    ${hasTable && !isTyping ? `<button class="message__action insert-manual-btn">📥 Insert into Sheet</button>` : ""}
+    <span class="execution-status"></span>
+  `;
+
   body.appendChild(contentEl);
   body.appendChild(meta);
   bubble.appendChild(avatar);
@@ -39,6 +46,22 @@ export function appendMessageBubble(
   container.appendChild(bubble);
   
   return { bubble, contentEl };
+}
+
+export function updateExecutionStatus(bubble: HTMLElement, status: "pending" | "success" | "error") {
+  const statusEl = bubble.querySelector(".execution-status");
+  if (!statusEl) return;
+  
+  if (status === "pending") {
+    statusEl.innerHTML = " &nbsp; ⚡ Applying...";
+    statusEl.style.color = "var(--warning)";
+  } else if (status === "success") {
+    statusEl.innerHTML = " &nbsp; ✅ Applied";
+    statusEl.style.color = "var(--success)";
+  } else {
+    statusEl.innerHTML = " &nbsp; ⚠️ Check Sheet";
+    statusEl.style.color = "var(--error)";
+  }
 }
 
 export function appendTypingIndicator(container: HTMLElement): HTMLElement {

@@ -226,7 +226,7 @@ async function streamAIResponse(retryCount = 0) {
 
     if (autoInsert) {
       console.log("Auto-inserting data from response...");
-      await processAutoActions(assistantMsg.content);
+      await handleActionWithUI(assistantMsg.content, assistantBubble);
     }
   } catch (error: any) {
     typingEl?.remove();
@@ -239,8 +239,39 @@ async function streamAIResponse(retryCount = 0) {
   }
 }
 
+async function handleActionWithUI(text: string, bubble: HTMLElement) {
+  UI.updateExecutionStatus(bubble, "pending");
+  try {
+    await processAutoActions(text);
+    UI.updateExecutionStatus(bubble, "success");
+  } catch (e) {
+    console.error("Auto-action failed", e);
+    UI.updateExecutionStatus(bubble, "error");
+  }
+}
+
+// ── Event Delegation for Manual Buttons ─────────────────────────────────────────
+chatMessages.addEventListener("click", async (e) => {
+  const target = e.target as HTMLElement;
+  if (target.classList.contains("insert-manual-btn")) {
+    const bubble = target.closest(".message") as HTMLElement;
+    const content = bubble.querySelector(".message__content")?.textContent || "";
+    
+    target.innerText = "⌛ Inserting...";
+    target.style.opacity = "0.5";
+    
+    try {
+      await processAutoActions(content);
+      target.innerText = "✅ Done";
+    } catch (err) {
+      target.innerText = "❌ Retry";
+      target.style.opacity = "1";
+    }
+  }
+});
+
 async function processAutoActions(text: string) {
-  console.log("Analyzing text for commands...", text.substring(0, 100) + "...");
+  console.log("Analyzing text for commands...");
   
   // Charts
   const chartType = AIParser.detectChartRequest(text);
